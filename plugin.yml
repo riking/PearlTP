@@ -1,10 +1,10 @@
 name: PearlTP
 main: com.kdude63.pearltp.main
-version: 0.81 (Build 2)
-description: Allows everyone to teleport, at the cost of one enderpearl.
+version: 1.0 (Build 7)
+description: Allows everyone to teleport at the cost of a configurable amount of enderpearls.
 author: kdude63
 dev-url: http://dev.bukkit.org/server-mods/pearltp/
 commands:
-    tp:
-       description: Teleports the given player (or yourself) to another player or coordinates
-       usage: "/tp [player] <target> and/or <x> <y> <z>"
+    ptp:
+       description: Teleports yourself to another player or coordinates.
+       usage: "Usage: /ptp <target> or <x> <y> <z>"
