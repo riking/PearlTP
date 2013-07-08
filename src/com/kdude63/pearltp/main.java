@@ -22,7 +22,7 @@ public class main extends JavaPlugin implements Listener
 	Integer maxdist;
 	String noperm;
 	Boolean itp;
-	ItemStack pearls;
+	public static ItemStack pearls;
 	
 	@Override
 	public void onEnable()
@@ -58,24 +58,6 @@ public class main extends JavaPlugin implements Listener
 		oPlayer.teleport(targetCoords);
 	}
 	
-	//For removing items from their inventory
-	public void removeItem(ItemStack item, Player player) {
-		Material m = item.getType();
-		int amount = item.getAmount();
-		for(int c=0; c<36; c++) {
-			ItemStack slot = player.getInventory().getItem(c);
-			if(slot.getType() == m) {
-    			if(slot.getAmount() > amount) {
-    				slot.setAmount(slot.getAmount() - amount);
-                       return;
-                   }else{
-                    amount -= slot.getAmount();
-                    player.getInventory().clear(c);
-                }
-            }
-        }
-	}
-	
 	//Command function
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
 		if (cmd.getName().equalsIgnoreCase("ptp")){
@@ -93,7 +75,7 @@ public class main extends JavaPlugin implements Listener
 								//If sender is not trying to teleport to themself
 								if (Bukkit.getServer().getPlayer(sender.getName()) != Bukkit.getServer().getPlayer(args[0])){
 									if (player.getInventory().contains(Material.ENDER_PEARL, cost)){					
-										removeItem(pearls, player);
+										player.getInventory().removeItem(pearls);
 										Location target = Bukkit.getServer().getPlayer(args[0]).getLocation();
 										
 										//Initiate teleport
@@ -114,7 +96,7 @@ public class main extends JavaPlugin implements Listener
 					else if (args.length == 3){
 						if (isNumber(args[0]) && isNumber(args[1]) && isNumber(args[2])){
 							if (player.getInventory().contains(Material.ENDER_PEARL, cost)){
-								removeItem(pearls, player);
+								player.getInventory().removeItem(pearls);
 								Location target = player.getLocation();
 								
 								//Update target coordinates
