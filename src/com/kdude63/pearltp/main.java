@@ -12,7 +12,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.command.*;
 import org.bukkit.entity.*;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public class main extends JavaPlugin implements Listener
@@ -23,6 +22,7 @@ public class main extends JavaPlugin implements Listener
 	Integer maxdist;
 	String noperm;
 	Boolean itp;
+	ItemStack pearls;
 	
 	@Override
 	public void onEnable()
@@ -36,8 +36,10 @@ public class main extends JavaPlugin implements Listener
         maxdist = config.getInt("max_distance");
         noperm = config.getString("noperm_message");
         itp = config.getBoolean("itp");
+        pearls = new ItemStack(Material.ENDER_PEARL, cost);
 	}
 	
+	//For checking if a string is a number
 	public boolean isNumber(String n){
 		if (n.matches("-?\\d+(\\.\\d+)?"))
 			return true;
@@ -45,63 +47,99 @@ public class main extends JavaPlugin implements Listener
 			return false;
 	}
 	
+	public void playerTeleport(String origin, String target){
+		Player oPlayer = Bukkit.getServer().getPlayer(origin);
+		Player tPlayer = Bukkit.getServer().getPlayer(target);
+		
+		//Get location of the target player
+		Location targetCoords = tPlayer.getLocation();
+		
+		//Teleport the origin player to the target player
+		oPlayer.teleport(targetCoords);
+	}
+	
+	//For removing items from their inventory
+	public void removeItem(ItemStack item, Player player) {
+		Material m = item.getType();
+		int amount = item.getAmount();
+		for(int c=0; c<36; c++) {
+			ItemStack slot = player.getInventory().getItem(c);
+			if(slot.getType() == m) {
+    			if(slot.getAmount() > amount) {
+    				slot.setAmount(slot.getAmount() - amount);
+                       return;
+                   }else{
+                    amount -= slot.getAmount();
+                    player.getInventory().clear(c);
+                }
+            }
+        }
+	}
+	
+	//Command function
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
 		if (cmd.getName().equalsIgnoreCase("ptp")){
-			if (sender instanceof Player){ //If the command sender is a player
-				if (sender.hasPermission("pearltp.notp")){
-					sender.sendMessage(noperm);	
-				}
-				else
-				{
-					if (args.length == 1 || args.length == 3){
-						if (args.length == 1){ //If the command has one argument
-							Player player = Bukkit.getServer().getPlayer(sender.getName());
-							Location target = Bukkit.getServer().getPlayer(args[0]).getLocation();
-							Inventory pinv = player.getInventory();
-							ItemStack pearls = new ItemStack(Material.ENDER_PEARL, cost);
-							if (itp){						
-								if (pinv.contains(Material.ENDER_PEARL, cost)){
-									pinv.remove(pearls);
-									player.teleport(target);
+			Player player = Bukkit.getServer().getPlayer(sender.getName());
+			//If the command sender is a player
+			if (sender instanceof Player){
+				if (sender.hasPermission("pearltp.notp") && sender.isOp() == false){
+					//Tell the command sender that they don't have permission to use the command
+					sender.sendMessage(ChatColor.RED + noperm);
+				//If the command sender has permission to use the command
+				}else{
+					if (args.length == 1){
+						if (itp){
+							if (Bukkit.getServer().getPlayer(args[0]) != null){
+								//If sender is not trying to teleport to themself
+								if (Bukkit.getServer().getPlayer(sender.getName()) != Bukkit.getServer().getPlayer(args[0])){
+									if (player.getInventory().contains(Material.ENDER_PEARL, cost)){					
+										removeItem(pearls, player);
+										Location target = Bukkit.getServer().getPlayer(args[0]).getLocation();
+										
+										//Initiate teleport
+										player.teleport(target);
+									}else{
+										sender.sendMessage(ChatColor.RED + "You need " + cost.toString() + " ender pearl(s) to teleport.");
+									}
 								}else{
-									sender.sendMessage(ChatColor.RED + "You need " + cost.toString() + " pearl(s) to teleport." + ChatColor.RESET);
+									sender.sendMessage("You can't teleport to yourself.");
 								}
 							}else{
-								sender.sendMessage("You can't teleport to other players.");
+								sender.sendMessage(ChatColor.RED + "Unable to find player " + args[0]);
 							}
-						}
-						else if (args.length == 3){ //If the command has three arguments
-							if (isNumber(args[0]) && isNumber(args[1]) && isNumber(args[2])){
-								Player player = Bukkit.getServer().getPlayer(sender.getName());
-								Location target = player.getLocation();
-								Inventory pinv = player.getInventory();
-								ItemStack pearls = new ItemStack(Material.ENDER_PEARL, cost);
-								if (pinv.contains(Material.ENDER_PEARL, cost)){
-									target.setX(Double.parseDouble(args[0]));
-									target.setY(Double.parseDouble(args[1]));
-									target.setZ(Double.parseDouble(args[2]));
-									
-									pinv.remove(pearls);
-									player.teleport(target);
-								}else{
-									sender.sendMessage(ChatColor.RED + "You need " + cost.toString() + " pearl(s) to teleport." + ChatColor.RESET);
-								}
-							}else{
-								return false;
-							}
+						}else{
+							sender.sendMessage(ChatColor.RED + noperm);
 						}
 					}
-					else{
+					else if (args.length == 3){
+						if (isNumber(args[0]) && isNumber(args[1]) && isNumber(args[2])){
+							if (player.getInventory().contains(Material.ENDER_PEARL, cost)){
+								removeItem(pearls, player);
+								Location target = player.getLocation();
+								
+								//Update target coordinates
+								target.setX(Double.parseDouble(args[0]));
+								target.setY(Double.parseDouble(args[1]));
+								target.setZ(Double.parseDouble(args[2]));
+								
+								//Intiate teleport
+								player.teleport(target);
+							}else{
+								sender.sendMessage(ChatColor.RED + "You need " + cost.toString() + " ender pearl(s) to teleport.");
+							}
+						}else{
+							return false;
+						}
+					}else{
 						return false;
 					}
 				}
-			}
-			else{ //If the command sender is console
+			}else{
+				//If the command sender is console
 				sender.sendMessage("Console can't use this command!");
 			}
 			return true;
-		}
-		else{
+		}else{
 			return false;
 		}
 	}
